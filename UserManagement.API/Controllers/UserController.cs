@@ -48,7 +48,7 @@ namespace UserManagementAPI.Controllers
             var existingUser = await _userService.GetUserById(id);
             if (existingUser == null)
                 return NotFound("User not found");
-            var result =  _userService.UpdateUser(existingUser, model);
+            var result =  await _userService.UpdateUser(existingUser, model);
             return Ok("User Updated");
         }
         [Authorize]
