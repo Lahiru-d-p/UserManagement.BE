@@ -28,6 +28,7 @@ namespace UserManagementAPI.Application.Services
 
         public async Task<User> RegisterUser(UserInsertModel model)
         {
+            
             var user = new User
             {
                 FirstName = model.FirstName,
@@ -41,6 +42,13 @@ namespace UserManagementAPI.Application.Services
             user.PasswordHash = hashedPassword;
             return await _userRepository.RegisterUser(user);
         }
+
+        public async Task<User> GetUserByNames(string firstName, string lastName)
+        {
+            var existingUser = await _userRepository.GetUserByNames(firstName, lastName);
+                return existingUser;
+        }
+
         public async Task<string> LoginAsync(UserLoginModel model)
         {
             var user = await _userRepository.GetUserByNames(model.FirstName,model.LastName);

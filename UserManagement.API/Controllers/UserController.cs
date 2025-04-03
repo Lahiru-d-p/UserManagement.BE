@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UserManagement.Domain.Entities;
 using UserManagement.Domain.Model;
 using UserManagementAPI.Application.Services;
 
@@ -21,15 +22,36 @@ namespace UserManagementAPI.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserInsertModel model)
         {
+            var existingUser = await _userService.GetUserByNames(model.FirstName, model.LastName);
+            if (existingUser != null)
+                return BadRequest(new
+                {
+                    status = false,
+                    statusText = "User Already Exists"
+                });
             var registeredUser = await _userService.RegisterUser(model);
-            return Ok(registeredUser);
+            return Ok(new
+            {
+                status = true,
+                statusText = "User Registered Successfully"
+            });
         }
+        
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] UserLoginModel model)
         {
             var token = await _userService.LoginAsync(model);
-            if (token == "Invalid credentials") return Unauthorized(new { Message = token });
-            return Ok(new { Token = token });
+            if (token == "Invalid credentials") return Unauthorized(new
+            {
+                status = false,
+                statusText = token
+            });
+            return Ok(new
+            {
+                status = true,
+                statusText = "Login Success",
+                data = token
+            });
         }
         [Authorize]
         [HttpPost("upload-photo/{userId}")]
@@ -39,7 +61,11 @@ namespace UserManagementAPI.Controllers
             {
                 var filePath = await _photoService.SavePhoto(file,userId);
             }
-            return Ok("Photos uploaded successfully.");
+            return Ok(new
+            {
+                status = true,
+                statusText = "Photos uploaded successfully."
+            });
         }
         [Authorize]
         [HttpPut("update/{id}")]
@@ -47,16 +73,28 @@ namespace UserManagementAPI.Controllers
         {
             var existingUser = await _userService.GetUserById(id);
             if (existingUser == null)
-                return NotFound("User not found");
+                return NotFound(new
+                {
+                    status = false,
+                    statusText = "User Not Found"
+                });
             var result =  await _userService.UpdateUser(existingUser, model);
-            return Ok("User Updated");
+            return Ok(new
+            {
+                status = true,
+                statusText = "User Updated"
+            });
         }
         [Authorize]
         [HttpGet("user/{id}")]
         public async Task<IActionResult> GetUserData(int id)
         {
             var users = await _userService.GetUserById(id);
-            return Ok(users);
+            return Ok(new
+            {
+                status = true,
+                data = users
+            });
         }
         [Authorize]
         [HttpGet("search")]
@@ -68,7 +106,11 @@ namespace UserManagementAPI.Controllers
             [FromQuery] string? gender)
         {
             var users = await _userService.SearchUsers(firstName, lastName, startDate, endDate, gender);
-            return Ok(users);
+            return Ok(new
+            {
+                status = true,
+                data = users
+            });
         }
 
         [Authorize]
@@ -76,8 +118,16 @@ namespace UserManagementAPI.Controllers
         public async Task<IActionResult> UploadPhoto(int photoId)
         {
             var result = await _photoService.DeletePhoto(photoId);
-            if (!result) return NotFound("Photo deletion failed");
-            return Ok("Photo deleted successfully.");
+            if (!result) return NotFound(new
+            {
+                status = false,
+                statusText = "Photo deletion failed"
+            });
+            return Ok(new
+            {
+                status = true,
+                statusText = "Photo deleted successfully"
+            });
         }
     }
 }
